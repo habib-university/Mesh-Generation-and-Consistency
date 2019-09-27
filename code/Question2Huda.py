@@ -118,6 +118,7 @@ class Mesh:
 
     def inconsistent(self):
         """
+        Assumption: all faces are co-planar
         :return: True if mesh is consistently oriented, False otherwise
         """
         self.inconsistent_list = []
