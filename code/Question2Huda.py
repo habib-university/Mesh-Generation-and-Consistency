@@ -9,6 +9,7 @@ class Vector:
         """
         self.points = np.array(vertices)
         self.normal_points = (0,0,0)
+
     def vertex_to_obj(self):
         v = 'v'
         for i in self.points:
@@ -49,6 +50,7 @@ class Face:
         dsp1 = Vector(v1.points - v3.points)
         dsp2 = Vector(v2.points - v3.points)
         return dsp1.cross_product(dsp2)
+
 
 class Mesh:
     def __init__(self, in_file):
@@ -92,13 +94,8 @@ class Mesh:
             x.append(i[0])
             y.append(i[1])
             z.append(i[2])
-        self.center = Vector([round(statistics.mean(x),2),round(statistics.mean(y),2),round(statistics.mean(z),2)])
+        self.center = Vector([statistics.mean(x),statistics.mean(y),statistics.mean(z)])
         return self.center
-
-    # def normals_of_all_faces:
-    #     normals = []
-    #     for i in range(self.count_faces):
-    #         normals.append(self.faces[i].)
 
     def vector_orientation(self, current_face, current_surface_normal):
         """
@@ -115,7 +112,11 @@ class Mesh:
         return all_normals
 
     def inconsistent(self):
-        out = [] # dot prodcut > 0
+        """
+        :return: True if mesh is consistently oriented, False otherwise
+        """
+        self.inconsistent_list = []
+        out = [] # dot product > 0
         inw = [] # dot product < 0
         normals = self.all_normals()
         for i in range(len(normals)):
@@ -126,17 +127,17 @@ class Mesh:
                 inw.append(self.faces[i])
 
         if len(out) >= len(inw): # inw are inconsistent. even if equal then inw are inconsistent
-            #print('inw inconsistent')
-            return inw
+            self.inconsistent_list = inw
+            return False
         elif len(out) < len(inw): # out are inconsistent
-            #print('out inconsistent')
-            return  out
-        elif len(out) == 0 or len(inw)== 0: # all consistent
-            #print('no inconsistent')
-            return []
+            self.inconsistent_list = out
+            return False
+        elif len(out) == 0 or len(inw) == 0: # all consistent
+            self.inconsistent_list = []
+            return False
 
 
-mesh1 = Mesh('geometry1.txt')
+mesh1 = Mesh('geometry2.txt')
 print(len(mesh1.inconsistent()))
 #print(mesh1.vector_orientation())
 
