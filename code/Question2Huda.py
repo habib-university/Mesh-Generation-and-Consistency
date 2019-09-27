@@ -30,7 +30,7 @@ class Face:
         """
         :param f_ind: the vertex indexes which make up the face
         """
-        self.ind = f_ind
+        self.ind = np.array(f_ind)
 
     def f_to_obj(self):
         f = 'f'
@@ -44,12 +44,17 @@ class Face:
         :param vertices: list of vectors which make a face, for each face in the mesh
         :return: surface normal of the face
         """
-        v1 = vertices[self.ind[0]]
-        v2 = vertices[self.ind[1]]
-        v3 = vertices[self.ind[2]]
-        dsp1 = Vector(v1.points - v3.points)
-        dsp2 = Vector(v2.points - v3.points)
-        return dsp1.cross_product(dsp2)
+        v1 = vertices[self.ind[0]] # A
+        v2 = vertices[self.ind[1]] # B
+        v3 = vertices[self.ind[2]] # C
+        dsp1 = Vector(v1.points - v3.points) #CA
+        dsp2 = Vector(v2.points - v3.points) #CB
+        return dsp1.cross_product(dsp2) # CA cross CB
+
+    def face_consistent(self):
+        """ order or cross product changes the orientation of the surface (direction of normal)"""
+        # CA cross CB is now CB cross CA. Swap indexes of vertices of A & B
+        self.ind[0], self.ind[1] = self.ind[1], self.ind[0]
 
 
 class Mesh:
@@ -62,7 +67,7 @@ class Mesh:
         self.faces = [] # list of faces
 
         self.tuple_vertices = []
-
+        self.inconsistent_list = []
         # first line in txt file contains count of vertices & faces in order
         self.count_vertices, self.count_faces = (int(i) for i in txt_file.readline().strip().split())
 
@@ -127,18 +132,20 @@ class Mesh:
                 inw.append(self.faces[i])
 
         if len(out) >= len(inw): # inw are inconsistent. even if equal then inw are inconsistent
-            self.inconsistent_list = inw
-            return False
+            return inw
         elif len(out) < len(inw): # out are inconsistent
-            self.inconsistent_list = out
-            return False
+            return out
         elif len(out) == 0 or len(inw) == 0: # all consistent
-            self.inconsistent_list = []
-            return False
+            return []
 
+    def all_faces_consistent(self):
+        inconsistent_list = self.inconsistent()
+        for i in inconsistent_list:
+            self.faces[i].face_consistent()
 
-mesh1 = Mesh('geometry2.txt')
-print(len(mesh1.inconsistent()))
+mesh1 = Mesh('geometry1.txt')
+mesh1.inconsistent()
+print(mesh1.inconsistent_list[0].ind)
 #print(mesh1.vector_orientation())
 
 def readTxtFile():
