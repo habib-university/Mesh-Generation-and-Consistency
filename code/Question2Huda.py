@@ -144,9 +144,48 @@ class Mesh:
         for i in inconsistent_list:
             self.faces[i].face_consistent()
 
+    def find_all_edges(self):
+        all_edges = {}
+        for i in self.faces:
+            face_ind = i.ind
+            for j in range(len(face_ind)):
+                if j == len(face_ind)-1:
+                    edge = (face_ind[j],face_ind[0])
+                else:
+                    edge = (face_ind[j],face_ind[j+1])
+                   # print (edge)
+
+                if edge in all_edges:
+                    all_edges[edge].append(i)
+                else:
+                    all_edges[edge] = [i]
+        return all_edges
+
+            #edge = (i, i + 1)
+            #if i == len()
+            #return self.faces[i].ind
+
+    def nonmanifold_edges(self):
+        """
+        mesh should be consistent, all edges belong to 2 triangles and all vertices have a single continuous set of triangles around them.
+        :return: a tuple. At index 0 it returns True if mesh is a manifold, False otherwise. At index 1 it return the list of non-manifold edges.
+        """
+        all_edges = self.find_all_edges()
+        non_manifold_edges = []
+        for i in all_edges:
+            if len(all_edges[i]) != 2:
+                non_manifold_edges.append(i)
+
+        if len(self.inconsistent()) == 0 and len(non_manifold_edges) == 0: #if mesh is a manifold
+            return True,non_manifold_edges
+        else:
+            return False,non_manifold_edges
+
+
 mesh1 = Mesh('geometry1.txt')
-mesh1.inconsistent()
-print(mesh1.inconsistent_list[0].ind)
+print(mesh1.nonmanifold_edges())
+# mesh1.inconsistent()
+# print(mesh1.inconsistent_list[0].ind)
 #print(mesh1.vector_orientation())
 
 def readTxtFile():
