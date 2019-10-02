@@ -94,7 +94,7 @@ class Mesh:
         """
         :return obj file in the current directory
         """
-        mesh_file = open('meramesh.obj', 'w')
+        mesh_file = open('geometry1.obj', 'w')
 
         for i in range(self.count_vertices):
             mesh_file.write(self.vertices[i].vertex_to_obj())
@@ -208,3 +208,6 @@ class Mesh:
         for i in self.faces:
             sum = sum + i.area_of_face(self.vertices)
         return sum
+
+mesh1 = Mesh('geometry1.txt')
+mesh1.parser()
