@@ -11,5 +11,5 @@ $(file).pdf: *.tex
 	pdflatex $(file)
 
 clean:
-	rm -f *.aux $(file).log $(file).lof $(file).toc $(file).bbl $(file).blg $(file).brf $(file).out $(file).pdf *.snm *.nav *.gz *.fdb_latexmk *.fls
+	rm -f *.aux $(file).log $(file).lof $(file).toc $(file).bbl $(file).blg $(file).brf $(file).out $(file).pdf *.snm *.nav *.gz *.fdb_latexmk *.fls Solutions.log Solutions.out
 
