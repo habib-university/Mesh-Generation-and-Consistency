@@ -1,15 +1,15 @@
 import numpy as np
 from MeshLib import *
 
-vq = Mesh('validQuadrilateralMesh.txt')
-vt = Mesh('validTriangleMesh.txt')
-vtq = Mesh('validTriQuadMesh.txt')
-g1 = Mesh('geometry1.txt')
-g2 = Mesh('geometry2.txt')
-g3 = Mesh('geometry3.txt')
-g4 = Mesh('geometry4.txt')
-g5 = Mesh('geometry5.txt')
-g6 = Mesh('geometry6.txt')
+vq = Mesh('testMeshes/validQuadrilateralMesh.txt')
+vt = Mesh('testMeshes/validTriangleMesh.txt')
+vtq = Mesh('testMeshes/validTriQuadMesh.txt')
+g1 = Mesh('testMeshes/geometry1.txt')
+g2 = Mesh('testMeshes/geometry2.txt')
+g3 = Mesh('testMeshes/geometry3.txt')
+g4 = Mesh('testMeshes/geometry4.txt')
+g5 = Mesh('testMeshes/geometry5.txt')
+g6 = Mesh('testMeshes/geometry6.txt')
 
 
 def test__conversion_to_obj():
