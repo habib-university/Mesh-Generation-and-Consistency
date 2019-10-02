@@ -1,6 +1,7 @@
 import math
 import numpy as np
-import  statistics
+import statistics
+
 
 class Vector:
     def __init__(self, vertices):
@@ -8,13 +9,12 @@ class Vector:
         :param vertices: tuple of co-ordinates
         """
         self.points = np.array(vertices)
-        self.normal_points = (0,0,0)
 
     def vertex_to_obj(self):
         v = 'v'
         for i in self.points:
             v+= ' ' + str(i)
-        v+= '\n'
+        v += '\n'
         return v
 
     def cross_product(self,point2):
@@ -22,7 +22,7 @@ class Vector:
         return Vector(self.normal_points)
 
     def normalize(self):
-        return np.linalg.norm(self.normal_points)
+        return np.linalg.norm(self.points)
 
 
 class Face:
@@ -42,19 +42,29 @@ class Face:
     def face_normals(self,vertices):
         """
         :param vertices: list of vectors which make a face, for each face in the mesh
-        :return: surface normal of the face
+        :return: surface normal of the face (obtained via cross product of edges)
+        Assumptions: vertices of a face are co-planar
         """
         v1 = vertices[self.ind[0]] # A
         v2 = vertices[self.ind[1]] # B
         v3 = vertices[self.ind[2]] # C
-        dsp1 = Vector(v1.points - v3.points) #CA
-        dsp2 = Vector(v2.points - v3.points) #CB
-        return dsp1.cross_product(dsp2) # CA cross CB
+        dsp1 = Vector(v1.points - v3.points)  # eg: edge CA
+        dsp2 = Vector(v2.points - v3.points)  # eg: edge CB
+        return dsp1.cross_product(dsp2)  # eg: CA cross CB
 
     def face_consistent(self):
         """ order or cross product changes the orientation of the surface (direction of normal)"""
         # CA cross CB is now CB cross CA. Swap indexes of vertices of A & B
         self.ind[0], self.ind[1] = self.ind[1], self.ind[0]
+
+    def area_of_face(self,vertices):
+        if len(vertices) == 3: #if triangle
+            return 0.5 * self.face_normals(vertices).normalize()
+        else: #quadrilateral
+            return self.face_normals(vertices).normalize()
+
+    def check_vertex_in_face(self,i):
+        return i in self.ind
 
 
 class Mesh:
@@ -84,7 +94,7 @@ class Mesh:
         """
         :return obj file in the current directory
         """
-        mesh_file = open('meramesh.obj', 'w')
+        mesh_file = open('geometry1.obj', 'w')
 
         for i in range(self.count_vertices):
             mesh_file.write(self.vertices[i].vertex_to_obj())
@@ -92,9 +102,9 @@ class Mesh:
             mesh_file.write(self.faces[i].f_to_obj())
 
     def center_of_mesh(self):
-        x=[]
-        y=[]
-        z=[]
+        x = []
+        y = []
+        z = []
         for i in self.tuple_vertices:
             x.append(i[0])
             y.append(i[1])
@@ -104,7 +114,7 @@ class Mesh:
 
     def vector_orientation(self, current_face, current_surface_normal):
         """
-        dot product is >0 for outward pointing vectors and <0 for inward point vectors
+        dot product is > 0 for outward pointing vectors and <0 for inward point vectors
         """
         vector_face = self.vertices[current_face.ind[0]] # fixing face vector to vector on first index of the face
         displacement_f_to_c = Vector(vector_face.points - self.center_of_mesh().points)
@@ -118,8 +128,13 @@ class Mesh:
 
     def inconsistent(self):
         """
+        :return: list of inconsistent faces. If length of list is 0, then mesh is consistent
         Assumption: all faces are co-planar
-        :return: True if mesh is consistently oriented, False otherwise
+        Logic: find the dot-product of the vector from center of mesh (centroid) and the surface normal of each mesh.
+        For the face which resulted in positive dot-product, normal was considered to point outward,
+        if negative then normal was considered pointing inward.
+        If outward pointing were greater than inward pointing, the orientation was considered was outward. Same for inward.
+        all faces which were not oriented as the selected (majority) orientation, were returned as list
         """
         self.inconsistent_list = []
         out = [] # dot product > 0
@@ -132,11 +147,11 @@ class Mesh:
             elif dot_product < 0:
                 inw.append(self.faces[i])
 
-        if len(out) >= len(inw): # inw are inconsistent. even if equal then inw are inconsistent
+        if len(out) >= len(inw):  # inw are inconsistent. even if equal then inw are inconsistent
             return inw
-        elif len(out) < len(inw): # out are inconsistent
+        elif len(out) < len(inw):  # out are inconsistent
             return out
-        elif len(out) == 0 or len(inw) == 0: # all consistent
+        elif len(out) == 0 or len(inw) == 0:  # all consistent
             return []
 
     def all_faces_consistent(self):
@@ -153,7 +168,6 @@ class Mesh:
                     edge = (face_ind[j],face_ind[0])
                 else:
                     edge = (face_ind[j],face_ind[j+1])
-                   # print (edge)
 
                 if edge in all_edges:
                     all_edges[edge].append(i)
@@ -161,14 +175,12 @@ class Mesh:
                     all_edges[edge] = [i]
         return all_edges
 
-            #edge = (i, i + 1)
-            #if i == len()
-            #return self.faces[i].ind
-
     def nonmanifold_edges(self):
         """
-        mesh should be consistent, all edges belong to 2 triangles and all vertices have a single continuous set of triangles around them.
-        :return: a tuple. At index 0 it returns True if mesh is a manifold, False otherwise. At index 1 it return the list of non-manifold edges.
+        mesh should be consistent, all edges belong to 2 triangles and all vertices have a
+        single continuous set of triangles around them.
+        :return: a tuple. At index 0 it returns True if mesh is a manifold, False otherwise.
+        At index 1 it return the list of non-manifold edges.
         """
         all_edges = self.find_all_edges()
         non_manifold_edges = []
@@ -181,16 +193,21 @@ class Mesh:
         else:
             return False,non_manifold_edges
 
+    def faces_connected_to_vertex(self):
+        vertices_dict = {}
+        for i in range(self.count_vertices):
+            vertices_dict[i] = []  # all vertices indexes must be in the dict
+            for j in range(self.count_faces):
+                face_to_check = self.faces[j]
+                if face_to_check.check_vertex_in_face(i):
+                    vertices_dict[i].append(j)
+        return vertices_dict
+
+    def area_of_mesh(self):
+        sum = 0
+        for i in self.faces:
+            sum = sum + i.area_of_face(self.vertices)
+        return sum
 
 mesh1 = Mesh('geometry1.txt')
-print(mesh1.nonmanifold_edges())
-# mesh1.inconsistent()
-# print(mesh1.inconsistent_list[0].ind)
-#print(mesh1.vector_orientation())
-
-def readTxtFile():
-	return True
-
-
-def computeArea():
-	return 0.1
+mesh1.parser()
