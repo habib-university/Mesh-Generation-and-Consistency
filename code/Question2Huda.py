@@ -2,6 +2,7 @@ import math
 import numpy as np
 import statistics
 
+
 class Vector:
     def __init__(self, vertices):
         """
@@ -14,7 +15,7 @@ class Vector:
         v = 'v'
         for i in self.points:
             v+= ' ' + str(i)
-        v+= '\n'
+        v += '\n'
         return v
 
     def cross_product(self,point2):
@@ -22,7 +23,7 @@ class Vector:
         return Vector(self.normal_points)
 
     def normalize(self):
-        return np.linalg.norm(self.normal_points)
+        return np.linalg.norm(self.points)
 
 
 class Face:
@@ -55,6 +56,17 @@ class Face:
         """ order or cross product changes the orientation of the surface (direction of normal)"""
         # CA cross CB is now CB cross CA. Swap indexes of vertices of A & B
         self.ind[0], self.ind[1] = self.ind[1], self.ind[0]
+
+    def area_of_face(self,vertices):
+        if len(vertices) == 3: #if triangle
+            # a = np.array(self.face_normals(vertices))
+            # print (a.normalize())
+            return 0.5 * self.face_normals(vertices).normalize()
+        else: #quadrilateral
+            return self.face_normals(vertices).normalize()
+
+    def check_vertex_in_face(self,i):
+        return i in self.ind
 
 
 class Mesh:
@@ -136,7 +148,7 @@ class Mesh:
             return inw
         elif len(out) < len(inw): # out are inconsistent
             return out
-        elif len(out) == 0 or len(inw) == 0: # all consistent
+        elif len(out) == 0 or len(inw) == 0:  # all consistent
             return []
 
     def all_faces_consistent(self):
@@ -153,17 +165,12 @@ class Mesh:
                     edge = (face_ind[j],face_ind[0])
                 else:
                     edge = (face_ind[j],face_ind[j+1])
-                   # print (edge)
 
                 if edge in all_edges:
                     all_edges[edge].append(i)
                 else:
                     all_edges[edge] = [i]
         return all_edges
-
-            #edge = (i, i + 1)
-            #if i == len()
-            #return self.faces[i].ind
 
     def nonmanifold_edges(self):
         """
@@ -181,16 +188,18 @@ class Mesh:
         else:
             return False,non_manifold_edges
 
-
-mesh1 = Mesh('geometry1.txt')
-print(mesh1.nonmanifold_edges())
-# mesh1.inconsistent()
-# print(mesh1.inconsistent_list[0].ind)
-#print(mesh1.vector_orientation())
-
-def readTxtFile():
-	return True
-
-
-def computeArea():
-	return 0.1
+    def faces_connected_to_vertex(self):
+        vertices_dict = {}
+        for i in range(self.count_vertices):
+            vertices_dict[i] = []  # all vertices indexes must be in the dict
+            for j in range(self.count_faces):
+                face_to_check = self.faces[j]
+                if face_to_check.check_vertex_in_face(i):
+                    vertices_dict[i].append(j)
+        return vertices_dict
+    
+    def area_of_mesh(self):
+        sum = 0
+        for i in self.faces:
+            sum = sum + i.area_of_face(self.vertices)
+        return sum
