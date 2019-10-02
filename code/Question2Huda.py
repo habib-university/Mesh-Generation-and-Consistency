@@ -1,6 +1,6 @@
 import math
 import numpy as np
-import  statistics
+import statistics
 
 class Vector:
     def __init__(self, vertices):
